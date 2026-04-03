@@ -57,8 +57,8 @@ spec:
           oracle:
             bucket:
               name: tourenbuch
-              region: eu-frankfurt-1
-              s3Endpoint: https://frrwy4uskhkj.compat.objectstorage.eu-frankfurt-1.oci.customer-oci.com
+              region: ap-singapore-1
+              s3Endpoint: https://ax60snkvilvf.compat.objectstorage.ap-singapore-1.oci.customer-oci.com
               credentials:
                 accessKey:
                   env: AWS_ACCESS_KEY_ID
