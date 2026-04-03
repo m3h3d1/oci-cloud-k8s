@@ -18,7 +18,7 @@ spec:
   gatewayClassName: envoy
   listeners:
     - name: https
-      hostname: "*.nce.wtf"
+      hostname: "*.nirjon.xyz"
       protocol: HTTPS
       port: 443
       allowedRoutes:
@@ -28,4 +28,4 @@ spec:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: wildcard-nce-wtf-tls-cert
+            name: wildcard-nirjon-xyz-tls-cert
