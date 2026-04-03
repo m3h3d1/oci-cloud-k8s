@@ -5,7 +5,7 @@ metadata:
   namespace: external-dns
 spec:
   endpoints:
-    - dnsName: home.nce.wtf
+    - dnsName: home.nirjon.xyz
       recordTTL: 300
       recordType: A
       targets:
@@ -18,7 +18,7 @@ metadata:
   namespace: external-dns
 spec:
   endpoints:
-    - dnsName: "*.home.nce.wtf"
+    - dnsName: "*.home.nirjon.xyz"
       recordTTL: 300
       recordType: A
       targets:

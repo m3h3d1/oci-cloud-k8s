@@ -41,7 +41,7 @@ spec:
     ingress:
       enabled: false
     config:
-      issuer: https://login.nce.wtf/dex/
+      issuer: https://login.nirjon.xyz/dex/
       # The storage configuration determines where dex stores its state. Supported
       # options include SQL flavors and Kubernetes third party resources.
       #
@@ -66,18 +66,18 @@ spec:
           IDEnv: envoy.client-id
           secretEnv: envoy.client-secret
           redirectURIs:
-            - https://storage.nce.wtf/oauth2/callback
-            - https://prometheus.nce.wtf/oauth2/callback
+            - https://storage.nirjon.xyz/oauth2/callback
+            - https://prometheus.nirjon.xyz/oauth2/callback
         - name: S3Proxy
           IDEnv: s3proxy.client-id
           secretEnv: s3proxy.client-secret
           redirectURIs:
-            - https://s3.nce.wtf/auth/dex/callback
+            - https://s3.nirjon.xyz/auth/dex/callback
         - name: Grafana
           IDEnv: grafana.client-id
           secretEnv: grafana.client-secret
           redirectURIs:
-            - https://monitoring.nce.wtf/login/generic_oauth
+            - https://monitoring.nirjon.xyz/login/generic_oauth
       connectors:
         - type: github
           # Required field for connector id.
@@ -88,7 +88,7 @@ spec:
             # Credentials can be string literals or pulled from the environment.
             clientID: $GITHUB_CLIENT_ID
             clientSecret: $GITHUB_CLIENT_SECRET
-            redirectURI: https://login.nce.wtf/dex/callback
+            redirectURI: https://login.nirjon.xyz/dex/callback
             orgs:
               - name: nce-acme
                 # A white list of teams. Only include group claims for these teams.
