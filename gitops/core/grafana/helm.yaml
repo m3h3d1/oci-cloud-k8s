@@ -51,7 +51,7 @@ spec:
         auth_url: https://login.nirjon.xyz/dex/auth
         token_url: https://login.nirjon.xyz/dex/token
         api_url: https://login.nirjon.xyz/dex/userinfo
-        role_attribute_path: contains(groups[*], 'nce-acme:admin') && 'Admin' || 'Viewer'
+        role_attribute_path: contains(groups[*], 'meislab:admin') && 'Admin' || 'Viewer'
 
     extraSecretMounts:
       - name: dex-grafana-client
