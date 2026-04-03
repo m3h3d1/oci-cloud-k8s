@@ -7,6 +7,8 @@ spec:
   interval: 1h
   path: ./gitops/core/s3-proxy
   prune: true
+  dependsOn:
+    - name: envoy-gateway-resources
   sourceRef:
     kind: GitRepository
     name: flux-system

@@ -1,7 +1,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: envoy-gateway
+  name: envoy-gateway-install
   namespace: flux-system
 spec:
   interval: 1h
@@ -15,3 +15,18 @@ spec:
       kind: Deployment
       name: envoy-gateway
       namespace: envoy-gateway
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: envoy-gateway-resources
+  namespace: flux-system
+spec:
+  interval: 1h
+  path: ./gitops/core/envoy-gateway/resources/
+  prune: true
+  dependsOn:
+    - name: envoy-gateway-install
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
