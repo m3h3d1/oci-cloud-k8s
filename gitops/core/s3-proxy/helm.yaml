@@ -76,4 +76,4 @@ spec:
                 provider: dex
                 oidc:
                   authorizationAccesses:
-                    - group: nce-acme:admin
+                    - group: meislab:admin

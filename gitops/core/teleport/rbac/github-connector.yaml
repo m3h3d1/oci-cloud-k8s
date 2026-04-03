@@ -10,7 +10,7 @@ spec:
   endpoint_url: ""
   redirect_url: https://teleport.nirjon.xyz/v1/webapi/github/callback
   teams_to_roles:
-    - organization: nce-acme
+    - organization: meislab
       roles:
         - editor
         - admin
