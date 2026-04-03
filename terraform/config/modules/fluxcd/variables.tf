@@ -6,13 +6,13 @@ variable "gh_token" {
 variable "gh_org" {
   type = string
 
-  default = "nce"
+  default = "m3h3d1"
 }
 
 variable "gh_repository" {
   type = string
 
-  default = "oci-free-cloud-k8s"
+  default = "oci-cloud-k8s"
 }
 
 variable "compartment_id" {
@@ -44,7 +44,7 @@ variable "git_url" {
   type        = string
   nullable    = false
 
-  default = "https://github.com/nce/oci-free-cloud-k8s.git"
+  default = "https://github.com/m3h3d1/oci-cloud-k8s.git"
 }
 
 variable "flux_version" {
