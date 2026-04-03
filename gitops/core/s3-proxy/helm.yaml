@@ -56,7 +56,7 @@ spec:
         targets:
           oracle:
             bucket:
-              name: tourenbuch
+              name: s3-proxy
               region: ap-singapore-1
               s3Endpoint: https://ax60snkvilvf.compat.objectstorage.ap-singapore-1.oci.customer-oci.com
               credentials:

@@ -32,3 +32,9 @@ module "grafana" {
 
   compartment_id = var.compartment_id
 }
+
+module "object_storage" {
+  source = "./modules/object-storage"
+
+  compartment_id = var.compartment_id
+}
