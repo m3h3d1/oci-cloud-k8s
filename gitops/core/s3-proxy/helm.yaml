@@ -46,8 +46,8 @@ spec:
               clientID: s3-proxy
               clientSecret:
                 env: S3_PROXY_DEX_CLIENT_SECRET
-              issuerUrl: https://login.nce.wtf/dex/
-              redirectUrl: https://s3.nce.wtf/
+              issuerUrl: https://login.nirjon.xyz/dex/
+              redirectUrl: https://s3.nirjon.xyz/
               scopes:
                 - openid
                 - profile

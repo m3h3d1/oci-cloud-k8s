@@ -9,9 +9,9 @@ spec:
       name: prometheus
   oidc:
     provider:
-      issuer: https://login.nce.wtf/dex/
+      issuer: https://login.nirjon.xyz/dex/
     clientID: envoy-gateway
     clientSecret:
       name: dex-envoy-client
-    redirectURL: "https://prometheus.nce.wtf/oauth2/callback"
+    redirectURL: "https://prometheus.nirjon.xyz/oauth2/callback"
     logoutPath: "/logout"
