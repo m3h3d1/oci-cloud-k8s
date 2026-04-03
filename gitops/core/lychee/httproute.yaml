@@ -4,8 +4,8 @@ metadata:
   name: lychee
 spec:
   parentRefs:
-    - name: contour-gateway
-      namespace: contour
+    - name: envoy
+      namespace: envoy-gateway
   hostnames:
     - "img.nirjon.xyz"
   rules:
