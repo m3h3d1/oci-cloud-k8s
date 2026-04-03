@@ -50,7 +50,7 @@ instance:
     kind: GitRepository
     url: ${var.git_url}
     path: gitops/core
-    ref: "refs/heads/main"
+    ref: "refs/heads/dev"
     provider: github
     pullSecret: flux-instance-config
 YAML
