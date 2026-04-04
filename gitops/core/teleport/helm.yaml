@@ -34,6 +34,10 @@ spec:
     kubeClusterName: oci
     proxyListenerMode: multiplex
     auth:
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        volumeSize: 5Gi
       teleportConfig:
         auth_service:
           authentication:
