@@ -14,4 +14,4 @@ spec:
     - apiVersion: apps/v1
       kind: Deployment
       name: metrics-server
-      namespace: metrics-server
+      namespace: kube-system
