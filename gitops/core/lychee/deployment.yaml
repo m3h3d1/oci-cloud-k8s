@@ -24,6 +24,8 @@ spec:
               value: "https://img.nirjon.xyz"
             - name: APP_FORCE_HTTPS
               value: "true"
+            - name: TRUSTED_PROXIES
+              value: "*"
             - name: PUID
               value: "1000"
             - name: PGID
