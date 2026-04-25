@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glance
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glance
+  template:
+    metadata:
+      labels:
+        app: glance
+    spec:
+      containers:
+      - name: glance
+        image: glanceapp/glance:latest
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: assets
+          mountPath: /app/assets
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: glance-config
+      - name: assets
+        configMap:
+          name: glance-assets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: glance
+  namespace: lab
+spec:
+  selector:
+    app: glance
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: glance
+  namespace: lab
+spec:
+  parentRefs:
+  - name: envoy
+    namespace: envoy-gateway
+  hostnames:
+  - glance.nirjon.xyz
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: glance
+      port: 80
