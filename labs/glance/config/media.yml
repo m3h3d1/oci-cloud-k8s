@@ -1,0 +1,50 @@
+- name: Media
+  columns:
+    - size: full
+      widgets:
+        - type: group
+          title: Media Server
+          widgets:
+            - type: custom-api
+              title: Now Playing
+              cache: 1m
+              url: https://api.jsonbin.io/v3/b/66e5f5e347762634e1767c37 # Mocking a media server response
+              template: |
+                <div class="flex gap-4 items-center p-2">
+                  <img src="https://via.placeholder.com/80x120" class="rounded shadow" />
+                  <div>
+                    <div class="size-h4 color-highlight">S3E14 • Suits</div>
+                    <div class="size-h6 text-gray-400">Herzenssachen</div>
+                    <div class="w-full bg-gray-700 h-1 mt-2 rounded-full overflow-hidden">
+                      <div class="bg-blue-500 h-full" style="width: 70%"></div>
+                    </div>
+                    <div class="text-right size-h6 text-gray-500 mt-1">23:18</div>
+                  </div>
+                </div>
+
+        - type: group
+          title: Trends
+          widgets:
+            - type: rss
+              style: horizontal-cards
+              limit: 5
+              feeds:
+                - url: https://news.google.com/rss/search?q=top+movies+trending&hl=en-US&gl=US&ceid=US:en
+                  title: Trending Movies
+                - url: https://news.google.com/rss/search?q=best+new+tv+shows&hl=en-US&gl=US&ceid=US:en
+                  title: Trending Series
+    - size: small
+      widgets:
+        - type: group
+          title: Releases
+          widgets:
+            - type: rss
+              title: Film Releases
+              limit: 5
+              feeds:
+                - url: https://news.google.com/rss/search?q=upcoming+movie+releases&hl=en-US&gl=US&ceid=US:en
+            - type: rss
+              title: Series Releases
+              limit: 5
+              feeds:
+                - url: https://news.google.com/rss/search?q=upcoming+tv+series+releases&hl=en-US&gl=US&ceid=US:en
