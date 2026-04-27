@@ -7,6 +7,7 @@ theme:
   custom-css-file: /assets/user.css
 
 pages:
-  # It's not necessary to create a new file for each page and include it, you can simply
-  # put its contents here, though multiple pages are easier to manage when separated
   - $include: home.yml
+  - $include: startpage.yml
+  - $include: media.yml
+  - $include: games.yml

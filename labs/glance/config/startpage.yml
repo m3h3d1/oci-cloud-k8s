@@ -1,0 +1,49 @@
+- name: Startpage
+  width: slim
+  hide-desktop-navigation: false
+  center-vertically: true
+  columns:
+    - size: full
+      widgets:
+        - type: search
+          autofocus: true
+
+        - type: monitor
+          cache: 1m
+          title: Services
+          sites:
+            - title: Glance
+              url: https://glance.nirjon.xyz
+              icon: si:glance
+            - title: Lychee
+              url: https://img.nirjon.xyz
+              icon: si:imagetoolbox
+            - title: Grafana
+              url: https://monitoring.nirjon.xyz
+              icon: si:grafana
+            - title: Teleport
+              url: https://teleport.nirjon.xyz
+              icon: si:circle
+            - title: Longhorn
+              url: https://storage.nirjon.xyz
+              icon: si:longhorn
+            - title: Boutique
+              url: https://boutique.nirjon.xyz
+              icon: si:homeassistantcommunitystore
+
+        - type: bookmarks
+          groups:
+            - title: Cluster Management
+              links:
+                - title: Longhorn
+                  url: https://storage.nirjon.xyz
+                - title: Grafana
+                  url: https://grafana.nirjon.xyz
+                - title: Teleport
+                  url: https://teleport.nirjon.xyz
+            - title: General
+              links:
+                - title: GitHub
+                  url: https://github.com/
+                - title: Google
+                  url: https://google.com
