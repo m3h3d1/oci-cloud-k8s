@@ -14,24 +14,27 @@ spec:
         app: glance
     spec:
       containers:
-      - name: glance
-        image: glanceapp/glance:latest
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: assets
-          mountPath: /app/assets
-          readOnly: true
+        - name: glance
+          image: glanceapp/glance:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: assets
+              mountPath: /app/assets
+              readOnly: true
+          envFrom:
+            - configMapRef:
+                name: glance-env
       volumes:
-      - name: config
-        configMap:
-          name: glance-config
-      - name: assets
-        configMap:
-          name: glance-assets
+        - name: config
+          configMap:
+            name: glance-config
+        - name: assets
+          configMap:
+            name: glance-assets
 ---
 apiVersion: v1
 kind: Service
