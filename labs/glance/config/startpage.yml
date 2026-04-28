@@ -9,26 +9,26 @@
           autofocus: true
 
         - type: monitor
-          cache: 1m
+          cache: 5m
           title: Services
           sites:
             - title: Glance
-              url: https://glance.nirjon.xyz
+              url: "${GLANCE_URL}"
               icon: si:glance
             - title: Lychee
-              url: https://img.nirjon.xyz
+              url: "${LYCHEE_URL}"
               icon: si:imagetoolbox
             - title: Grafana
-              url: https://monitoring.nirjon.xyz
+              url: "${GRAFANA_URL}"
               icon: si:grafana
             - title: Teleport
-              url: https://teleport.nirjon.xyz
+              url: "${TELEPORT_URL}"
               icon: si:circle
             - title: Longhorn
-              url: https://storage.nirjon.xyz
+              url: "${LONGHORN_URL}"
               icon: si:longhorn
             - title: Boutique
-              url: https://boutique.nirjon.xyz
+              url: "${BOUTIQUE_URL}"
               icon: si:homeassistantcommunitystore
 
         - type: bookmarks
@@ -36,11 +36,11 @@
             - title: Cluster Management
               links:
                 - title: Longhorn
-                  url: https://storage.nirjon.xyz
+                  url: "${LONGHORN_URL}"
                 - title: Grafana
-                  url: https://grafana.nirjon.xyz
+                  url: "${GRAFANA_URL}"
                 - title: Teleport
-                  url: https://teleport.nirjon.xyz
+                  url: "${TELEPORT_URL}"
             - title: General
               links:
                 - title: GitHub

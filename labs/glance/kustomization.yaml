@@ -9,12 +9,14 @@ resources:
 configMapGenerator:
   - name: glance-config
     files:
-    files:
-      - config/glance.yml
-      - config/home.yml
-      - config/startpage.yml
-      - config/media.yml
-      - config/games.yml
+    - config/glance.yml
+    - config/home.yml
+    - config/startpage.yml
+    - config/media.yml
+    - config/games.yml
+  - name: glance-env
+    envs:
+    - config/urls.env
   - name: glance-assets
     files:
-      - assets/user.css
+    - assets/user.css
