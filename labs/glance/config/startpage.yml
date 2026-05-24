@@ -12,13 +12,13 @@
           cache: 5m
           title: Services
           sites:
-            - title: Glance
+            - title: Home
               url: "${GLANCE_URL}"
               icon: si:glance
             - title: Lychee
               url: "${LYCHEE_URL}"
               icon: si:imagetoolbox
-            - title: Grafana
+            - title: Monitoring
               url: "${GRAFANA_URL}"
               icon: si:grafana
             - title: Teleport
@@ -37,7 +37,7 @@
               links:
                 - title: Longhorn
                   url: "${LONGHORN_URL}"
-                - title: Grafana
+                - title: Monitoring
                   url: "${GRAFANA_URL}"
                 - title: Teleport
                   url: "${TELEPORT_URL}"

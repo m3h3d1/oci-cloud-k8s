@@ -48,3 +48,11 @@
               limit: 5
               feeds:
                 - url: https://news.google.com/rss/search?q=upcoming+tv+series+releases&hl=en-US&gl=US&ceid=US:en
+        - type: custom-api
+          title: xkcd
+          cache: 2m
+          url: https://xkcd.com/info.0.json
+          template: | 
+            <body> {{ .JSON.String "title" }}</body>
+            <img src="{{ .JSON.String "img" }}"></img>
+        
