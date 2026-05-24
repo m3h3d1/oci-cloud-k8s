@@ -1,55 +1,177 @@
 - name: Games
   columns:
-      - size: full
-        widgets:
-            - type: custom-api
-              title: Epic Games
-              cache: 1h
-              url: https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en&allowCountries=US
-              template: |
-                  <div>
-                    {{ if eq .Response.StatusCode 200 }}
-                      <div class="horizontal-cards-2">
-                        {{ range .JSON.Array "data.Catalog.searchStore.elements" }}
-                          {{ $price := .String "price.totalPrice.discountPrice" }}
-                          {{ $hasPromo := gt (len (.Array "promotions.promotionalOffers")) 0 }}
-                          {{ if and $hasPromo (eq $price "0") }}
-                            {{ $gamePage := .String "productSlug" }}
-                            {{ if gt (len (.Array "offerMappings")) 0 }}
-                              {{ $gamePage = .String "offerMappings.0.pageSlug" }}
-                            {{end }}
-                            <a href="https://store.epicgames.com/en-US/p/{{ $gamePage }}" target="_blank" class="card">
-                              {{ $title := .String "title" }}
-                              {{ range .Array "keyImages" }}
-                                {{ if eq (.String "type") "OfferImageWide" }}
-                                  <img src="{{ .String "url" }}" alt="{{ $title }}" style="width: 100%; max-width: 300px; height: 150px; object-fit: cover; border-radius: var(--border-radius);">
-                                {{ end }}
-                              {{ end }}
-                              <div class="card-content">
-                                <span class="size-base color-primary">{{ $title }}</span><br>
-                                <span class="size-h5 color-subdue">
-                                  {{ if $hasPromo }}
-                                    {{ $promotions := .Array "promotions.promotionalOffers" }}
-                                    {{ if gt (len $promotions) 0 }}
-                                      {{ $firstPromo := index $promotions 0 }}
-                                      {{ $offers := $firstPromo.Array "promotionalOffers" }}
-                                      {{ if gt (len $offers) 0 }}
-                                        {{ $firstOffer := index $offers 0 }}
-                                        Free until {{ slice ($firstOffer.String "endDate") 0 10 }}
-                                      {{ else }}
-                                        Free this week!
-                                      {{ end }}
-                                    {{ else }}
-                                      Free this week!
-                                    {{ end }}
-                                  {{ end }}
-                                </span>
-                              </div>
-                            </a>
+    - size: full
+      widgets:
+        - type: custom-api
+          title: Epic Games Freebies
+          cache: 1h
+          url: https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en&allowCountries=US
+          template: |
+            <div>
+              {{ if eq .Response.StatusCode 200 }}
+                <div class="horizontal-cards-2">
+                  {{ range .JSON.Array "data.Catalog.searchStore.elements" }}
+                    {{ $price := .String "price.totalPrice.discountPrice" }}
+                    {{ $basePrice := .String "price.totalPrice.basePrice" }}
+                    {{ $hasPromo := gt (len (.Array "promotions.promotionalOffers")) 0 }}
+                    {{ if and $hasPromo (eq $price "0") }}
+                      {{ $gamePage := .String "productSlug" }}
+                      {{ if gt (len (.Array "offerMappings")) 0 }}
+                        {{ $gamePage = .String "offerMappings.0.pageSlug" }}
+                      {{end }}
+                      <a href="https://store.epicgames.com/en-US/p/{{ $gamePage }}" target="_blank" class="card" style="text-decoration: none; color: inherit;">
+                        {{ $title := .String "title" }}
+                        {{ range .Array "keyImages" }}
+                          {{ if eq (.String "type") "OfferImageWide" }}
+                            <img src="{{ .String "url" }}" alt="{{ $title }}" style="width: 100%; max-width: 300px; height: 150px; object-fit: cover; border-radius: var(--border-radius);">
                           {{ end }}
                         {{ end }}
-                      </div>
-                    {{ else }}
-                      <p class="color-negative">Error fetching Epic Games data.</p>
+                        <div class="card-content">
+                          <div class="flex justify-between items-start">
+                            <span class="size-base color-primary" style="font-weight: bold;">{{ $title }}</span>
+                            <span class="size-h6 color-positive" style="background: rgba(0,255,0,0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold;">FREE</span>
+                          </div>
+                          <span class="size-h5 color-subdue">
+                            {{ if $hasPromo }}
+                              {{ $promotions := .Array "promotions.promotionalOffers" }}
+                              {{ if gt (len $promotions) 0 }}
+                                {{ $firstPromo := index $promotions 0 }}
+                                {{ $offers := $firstPromo.Array "promotionalOffers" }}
+                                {{ if gt (len $offers) 0 }}
+                                  {{ $firstOffer := index $offers 0 }}
+                                  Free until {{ slice ($firstOffer.String "endDate") 0 10 }}
+                                {{ else }}
+                                  Free this week!
+                                {{ end }}
+                              {{ else }}
+                                Free this week!
+                              {{ end }}
+                            {{ else }}
+                              Free this week!
+                            {{ end }}
+                          </span>
+                        </div>
+                      </a>
                     {{ end }}
-                  </div>
+                  {{ end }}
+                </div>
+              {{ else }}
+                <p class="color-negative">Error fetching Epic Games data.</p>
+              {{ end }}
+            </div>
+
+        - type: rss
+          title: Universal Game Deals
+          cache: 3h
+          style: horizontal-cards
+          limit: 6
+          feeds:
+            - url: https://isthereanydeal.com/feeds/US/USD/deals.rss
+              title: IsThereAnyDeal
+
+    - size: small
+      widgets:
+        - type: twitch-top-games
+          exclude:
+            - just-chatting
+            - pools-hot-tubs-and-beaches
+            - music
+            - art
+            - asmr
+        
+        - type: rss
+          title: Gaming News
+          cache: 3h
+          limit: 5
+          feeds:
+            - url: http://feeds.feedburner.com/ign/news
+              title: IGN News
+
+        - type: twitch-channels
+          title: Live Now
+          channels:
+            - theprimeagen
+            - shroud
+            - xqc
+            - ninja
+
+        - type: custom-api
+          title: Football Scores
+          cache: 15s
+          url: https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard
+          template: |
+            {{- $fallback := "/assets/default-team-logo.png" -}}
+
+            <ul class="list list-gap-10 collapsible-container" data-collapse-after="5">
+             {{ range .JSON.Array "events" }}
+              <li>
+                 {{ $competitions := .Array "competitions" }}
+                 {{ if gt (len $competitions) 0 }}
+                  {{ $comp0 := index $competitions 0 }}
+                  {{ $competitors := $comp0.Array "competitors" }}
+                  {{ if ge (len $competitors) 2 }}
+                    {{ $c0 := index $competitors 0 }}
+                    {{ $c1 := index $competitors 1 }}
+
+                    {{ $short := $comp0.String "status.type.shortDetail" }}
+                    {{ $state := $comp0.String "status.type.state" }}
+
+                    <div style="display:flex; gap:10px; padding:8px 0;">
+
+                      <div style="width:30px; font-weight:bold; font-size: 11px; display:flex; align-items:center;">
+                        {{- if eq $short "Scheduled" -}}
+                          {{- $date := $comp0.String "date" -}}
+                          <span style="color:#aaa;">
+                            {{ printf "%s:%s" (slice $date 11 13) (slice $date 14 16) }}
+                          </span>
+                        {{- else if eq $state "in" -}}
+                          <span style="color:#00c853;">{{ $comp0.String "status.displayClock" }}</span>
+                        {{- else if eq $short "Postponed" -}}
+                          <span style="color:#aaa;">Post.</span>
+                        {{- else if eq $short "Canceled" -}}
+                          <span style="color:#aaa;">Canc.</span>
+                        {{- else -}}
+                          <span style="color:#aaa;">{{ $short }}</span>
+                        {{- end }}
+                      </div>
+
+                      <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+
+                        {{- $logo0 := $c0.String "team.logo" -}}
+                        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                          <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+                              {{ if ne $logo0 "" }}
+                                <img src="{{ $logo0 }}" width="24" height="24" style="flex-shrink:0;">
+                              {{ else }}
+                                <img src="{{ $fallback }}" width="24" height="24" style="flex-shrink:0;">
+                              {{ end }}
+                              <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">
+                                  {{ $c0.String "team.shortDisplayName" }}
+                              </span>
+                          </div>
+                          <span style="font-weight:700;">{{ $c0.String "score" }}</span>
+                        </div>
+
+                        {{- $logo1 := $c1.String "team.logo" -}}
+                        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                          <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                            {{ if ne $logo1 "" }}
+                              <img src="{{ $logo1 }}" width="24" height="24" style="flex-shrink:0;">
+                            {{ else }}
+                              <img src="{{ $fallback }}" width="24" height="24" style="flex-shrink:0;">
+                            {{ end }}
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">
+                              {{ $c1.String "team.shortDisplayName" }}
+                            </span>
+                          </div>
+                          <span style="font-weight:700;">{{ $c1.String "score" }}</span>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  {{ end }}
+                 {{ end }}
+               </li>
+             {{ end }}
+            </ul>
