@@ -28,6 +28,10 @@ spec:
         name: tailscale
       interval: 5m
   releaseName: tailscale-operator
+  values:
+    operatorConfig:
+      image:
+        repository: docker.io/tailscale/k8s-operator
   valuesFrom:
     - kind: Secret
       name: tailscale-operator-values
