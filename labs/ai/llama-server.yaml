@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-server
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-server
+  template:
+    metadata:
+      labels:
+        app: llama-server
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: 10.0.1.84
+      initContainers:
+      - name: download-model
+        image: docker.io/curlimages/curl:latest
+        command:
+        - sh
+        - -c
+        - curl -L -o /models/model.gguf
+          "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      containers:
+      - name: llama-server
+        image: ghcr.io/ggml-org/llama.cpp:server
+        args:
+        - -m
+        - /models/model.gguf
+        - --host
+        - "0.0.0.0"
+        - --port
+        - "8080"
+        - --ctx-size
+        - "4096"
+        - --n-gpu-layers
+        - "0"
+        - -t
+        - "2"
+        - --threads-batch
+        - "2"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
+      volumes:
+      - name: models
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-server
+  namespace: lab
+spec:
+  selector:
+    app: llama-server
+  ports:
+  - port: 8080
+    targetPort: 8080
