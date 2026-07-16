@@ -68,6 +68,7 @@ spec:
           redirectURIs:
             - https://storage.nirjon.xyz/oauth2/callback
             - https://prometheus.nirjon.xyz/oauth2/callback
+            - https://llm.nirjon.xyz/oauth2/callback
         - name: S3Proxy
           IDEnv: s3proxy.client-id
           secretEnv: s3proxy.client-secret
