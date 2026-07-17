@@ -12,3 +12,12 @@ spec:
           service.beta.kubernetes.io/oci-load-balancer-shape: flexible
           service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
           service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+      envoyDeployment:
+        container:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 100Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
