@@ -1,0 +1,96 @@
+# A/B Test 2 — isolates the QUANT variable only.
+# Identical to vibethinker-test.yaml (same node, same STOCK ggml image, same
+# args, same resources) EXCEPT the model quant:
+#   control (vibethinker-test): Q4_K_M  -> 6.1 tok/s
+#   variant (this file):        Q4_0    (stock image has asimddp/dotprod repack
+#                                        kernels that N1 can use — est. +20-40%)
+# Run SEQUENTIALLY with the control, not together (2-core / ~8.6Gi node).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vibethinker-3b-q4-0
+  namespace: lab
+  labels:
+    app: vibethinker-3b-q4-0
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: "10.0.1.246"
+  initContainers:
+  - name: download-model
+    image: docker.io/curlimages/curl:latest
+    command:
+    - sh
+    - -c
+    - curl -L -o /models/vibethinker-3b-q4_0.gguf
+      "https://huggingface.co/prithivMLmods/VibeThinker-3B-GGUF/resolve/main/VibeThinker-3B.Q4_0.gguf"
+    volumeMounts:
+    - name: model-storage
+      mountPath: /models
+  containers:
+  - name: llama-server
+    image: ghcr.io/ggml-org/llama.cpp:server
+    args:
+    - -m
+    - /models/vibethinker-3b-q4_0.gguf
+    - --host
+    - "0.0.0.0"
+    - --port
+    - "8080"
+    - --ctx-size
+    - "2048"
+    - --n-gpu-layers
+    - "0"
+    - -t
+    - "2"
+    - --threads-batch
+    - "2"
+    - --prio
+    - "2"
+    resources:
+      limits:
+        cpu: "2"
+        memory: 2300Mi
+      requests:
+        cpu: 500m
+        memory: 2Gi
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - name: model-storage
+      mountPath: /models
+  volumes:
+  - name: model-storage
+    emptyDir: {}
+  restartPolicy: Never
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vibethinker-3b-q4-0
+  namespace: lab
+spec:
+  selector:
+    app: vibethinker-3b-q4-0
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: llm2
+  namespace: lab
+spec:
+  hostnames:
+  - llm2.nirjon.xyz
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: envoy
+    namespace: envoy-gateway
+  rules:
+  - backendRefs:
+    - name: vibethinker-3b-q4-0
+      port: 8080
+    timeouts:
+      request: 0s
