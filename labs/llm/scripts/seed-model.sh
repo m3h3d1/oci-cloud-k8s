@@ -58,11 +58,11 @@ kubectl wait -n $NAMESPACE --for=condition=ready pod/copy-helper --timeout=60s
 
 echo "=== Copying model (this takes ~15s) ==="
 kubectl exec -n lab copy-helper -- sh -c '
-  cp -v /source/model.gguf /dest/model.gguf 2>&1 && sync && echo "sync ok"
+  cp -v /source/qwen3.5-2b-q4_0.gguf /dest/qwen3.5-2b-q4_0.gguf 2>&1 && sync && echo "sync ok"
 '
 
 echo "=== Verifying seed PVC ==="
-kubectl exec -n lab copy-helper -- ls -lh /dest/model.gguf
+kubectl exec -n lab copy-helper -- ls -lh /dest/qwen3.5-2b-q4_0.gguf
 
 echo "=== Cleaning up copy pod ==="
 kubectl delete pod -n lab copy-helper --grace-period=0 --force 2>/dev/null
