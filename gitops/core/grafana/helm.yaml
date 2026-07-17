@@ -38,6 +38,9 @@ spec:
         domain: monitoring.nirjon.xyz
         root_url: https://monitoring.nirjon.xyz
 
+      dashboards:
+        default_timezone: Asia/Dhaka
+
       users:
         allow_sign_up: false
 

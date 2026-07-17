@@ -16,10 +16,4 @@ configMapGenerator:
         grafana_dashboard: "1"
         app.kubernetes.io/part-of: flux
         kustomize.toolkit.fluxcd.io/substitute: disabled
-  - name: bkw-grafana-dashboards
-    files:
-      - dashboards/bkw.json
-    options:
-      labels:
-        grafana_dashboard: "1"
-        kustomize.toolkit.fluxcd.io/substitute: disabled
+
