@@ -1,38 +1,28 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: llama-server
   namespace: lab
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: llama-server
+  serviceName: llama-server
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
         app: llama-server
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: 10.0.1.84
-      initContainers:
-      - name: download-model
-        image: docker.io/curlimages/curl:latest
-        command:
-        - sh
-        - -c
-        - curl -L -o /models/model.gguf
-          "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf"
-        volumeMounts:
-        - name: models
-          mountPath: /models
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: llama-server
+            topologyKey: kubernetes.io/hostname
       containers:
       - name: llama-server
         image: ghcr.io/ggml-org/llama.cpp:server
@@ -58,8 +48,8 @@ spec:
             cpu: 500m
             memory: 1Gi
           limits:
-            cpu: "1"
-            memory: 2Gi
+            cpu: "2"
+            memory: 2560Mi
         volumeMounts:
         - name: models
           mountPath: /models
@@ -73,9 +63,16 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 20
-      volumes:
-      - name: models
-        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: models
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+      storageClassName: longhorn
 ---
 apiVersion: v1
 kind: Service
@@ -106,6 +103,8 @@ spec:
   - backendRefs:
     - name: llama-server
       port: 8080
+    timeouts:
+      request: 0s
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
