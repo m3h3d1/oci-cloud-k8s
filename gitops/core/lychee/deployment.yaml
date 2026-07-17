@@ -34,6 +34,12 @@ spec:
               value: sqlite
             - name: DB_DATABASE
               value: /conf/db.sqlite
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
           ports:
             - containerPort: 80
               name: http
