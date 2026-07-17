@@ -41,6 +41,11 @@ spec:
             app.kubernetes.io/component: monitoring
         retention: ""
         retentionSize: 14GB
+        resources:
+          requests:
+            memory: 512Mi
+          limits:
+            memory: 1Gi
         storageSpec:
           volumeClaimTemplate:
             spec:
@@ -85,6 +90,11 @@ spec:
       forceDeployDatasources: true
     alertmanager:
       alertmanagerSpec:
+        resources:
+          requests:
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         volumes:
           - name: slack-webhook
             secret:

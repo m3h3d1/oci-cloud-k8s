@@ -26,6 +26,12 @@ spec:
       interval: 5m
   releaseName: grafana
   values:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
     grafana.ini:
       app_mode: production
       server:
