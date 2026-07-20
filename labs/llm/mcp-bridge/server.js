@@ -1,25 +1,14 @@
-// Minimal MCP-to-Tavily reverse proxy.
-// Purpose: give the llama-server WebUI a same-origin-friendly, CORS-clean
-// MCP endpoint WITHOUT using llama.cpp's own --webui-mcp-proxy (a confirmed
-// open-relay / SSRF vector — see ggml-org/llama.cpp#20372).
+// MCP-to-Tavily reverse proxy for the llama-server WebUI.
+// Replaces llama.cpp's --webui-mcp-proxy, an open relay (ggml-org/llama.cpp#20372).
 //
-// Security properties:
-//  - Fixed destination only: https://mcp.tavily.com/mcp — no client-supplied
-//    "url" parameter exists, so this cannot be redirected to internal
-//    cluster services or cloud metadata endpoints.
-//  - Tavily API key lives only in this pod's env (from OCI Vault via
-//    ExternalSecret) — never sent to or stored in the browser.
-//  - Access to this bridge itself is gated by a shared token passed as a
-//    URL query param (?token=...), not a header — avoids the CORS
-//    preflight + OIDC-reverse-proxy conflict documented upstream
-//    (ggml-org/llama.cpp#10854, #21012).
-//  - Forces safe Tavily defaults (max_results, search_depth,
-//    include_raw_content) server-side, regardless of what the model
-//    requests, to prevent the context-overflow failures seen with
-//    uncontrolled raw_content responses.
+// - Fixed upstream; no client-supplied URL, so it can't reach internal services.
+// - Tavily key stays in this pod (OCI Vault via ExternalSecret), never in the browser.
+// - Bridge access gated by BRIDGE_TOKEN.
+// - Forces safe Tavily defaults server-side to prevent context overflow.
 
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
 
 const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
 const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN;
@@ -37,9 +26,18 @@ if (!BRIDGE_TOKEN) {
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type, accept, mcp-session-id, mcp-protocol-version',
+  'Access-Control-Allow-Headers': 'authorization, content-type, accept, mcp-session-id, mcp-protocol-version',
   'Access-Control-Expose-Headers': 'mcp-session-id',
 };
+
+// Constant-time compare.
+function tokenMatches(presented) {
+  if (typeof presented !== 'string') return false;
+  const a = Buffer.from(presented);
+  const b = Buffer.from(BRIDGE_TOKEN);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
 
 const server = http.createServer((req, res) => {
   const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
@@ -62,10 +60,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (reqUrl.searchParams.get('token') !== BRIDGE_TOKEN) {
+  // Query-param form is deprecated: Envoy logs full request paths, so it leaks
+  // the token. Kept only for back-compat with existing browser configs.
+  const authHeader = req.headers['authorization'] || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const queryToken = reqUrl.searchParams.get('token');
+
+  if (!tokenMatches(bearer) && !tokenMatches(queryToken)) {
+    // TEMP DIAG — remove once the WebUI header issue is resolved.
+    console.warn('401', JSON.stringify({
+      hasAuthHeader: !!req.headers['authorization'],
+      authScheme: authHeader.split(' ')[0] || null,
+      bearerLen: bearer ? bearer.length : 0,
+      expectedLen: BRIDGE_TOKEN.length,
+      hasQueryToken: !!queryToken,
+      headerNames: Object.keys(req.headers).sort(),
+    }));
     res.writeHead(401, CORS_HEADERS);
     res.end('unauthorized');
     return;
+  }
+  if (!bearer && queryToken) {
+    console.warn('deprecated: token supplied via query param (leaks into Envoy access logs) — use Authorization: Bearer');
   }
 
   const upstreamUrl = new URL('https://mcp.tavily.com/mcp');
