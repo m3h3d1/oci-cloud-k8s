@@ -23,6 +23,29 @@ spec:
               matchLabels:
                 app: llama-server
             topologyKey: kubernetes.io/hostname
+      initContainers:
+      # Injects the bridge token into ui.json. Heredoc is quoted so the JSON's
+      # backslash escapes survive the shell. Note "headers" must itself be a
+      # JSON *string* — the WebUI JSON.parse()s it, and drops non-string values.
+      - name: render-ui-config
+        image: ghcr.io/ggml-org/llama.cpp:server
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          cat > /tmp/ui.tmpl <<'TMPL'
+          {"mcpServers": "[{\"name\": \"tavily\", \"url\": \"https://mcp-bridge.nirjon.xyz/mcp\", \"transport\": \"streamable_http\", \"enabled\": true, \"headers\": \"{\\\"Authorization\\\": \\\"Bearer __BRIDGE_TOKEN__\\\"}\"}]"}
+          TMPL
+          sed "s|__BRIDGE_TOKEN__|${BRIDGE_TOKEN}|" /tmp/ui.tmpl > /uiconfig/ui.json
+        env:
+        - name: BRIDGE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-bridge-token
+              key: token
+        volumeMounts:
+        - name: uiconfig
+          mountPath: /uiconfig
       containers:
       - name: llama-server
         image: ghcr.io/ggml-org/llama.cpp:server
@@ -35,12 +58,18 @@ spec:
         - "8080"
         - --ctx-size
         - "8192"
+        - --parallel
+        - "1"
         - --n-gpu-layers
         - "0"
         - -t
         - "2"
         - --threads-batch
         - "2"
+        # Seeds the WebUI's MCP config server-side. The browser wipes its own
+        # copy whenever /props returns non-JSON, which happens on every logout.
+        - --ui-config-file
+        - /uiconfig/ui.json
         ports:
         - containerPort: 8080
         resources:
@@ -49,10 +78,13 @@ spec:
             memory: 1Gi
           limits:
             cpu: "2"
-            memory: 3072Mi
+            memory: 2048Mi
         volumeMounts:
         - name: models
           mountPath: /models
+        - name: uiconfig
+          mountPath: /uiconfig
+          readOnly: true
         readinessProbe:
           tcpSocket:
             port: 8080
@@ -63,6 +95,9 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 20
+      volumes:
+      - name: uiconfig
+        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: models
