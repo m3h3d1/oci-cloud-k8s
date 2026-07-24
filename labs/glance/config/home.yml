@@ -65,21 +65,67 @@
             - UC6biysICWOJ-C3P4Tyeggzg # Low Level
             - UCgfe2ooZD3VJPB6aJAnuQng # bycloud
 
-
-        - type: group
-          widgets:
-            - type: reddit
-              subreddit: selfhosted
-              show-thumbnails: true
-
     - size: small
       widgets:
-        - type: weather
-          location: Dhaka, Bangladesh
-          units: metric # alternatively "imperial"
-          hour-format: 12h # alternatively "24h"
-          # Optionally hide the location from being displayed in the widget
-          # hide-location: true
+        - type: group
+          title: Dhaka
+          widgets:
+            - type: weather
+              title: Weather
+              location: Dhaka, Bangladesh
+              units: metric # alternatively "imperial"
+              hour-format: 12h # alternatively "24h"
+              # Optionally hide the location from being displayed in the widget
+              # hide-location: true
+
+            - type: custom-api
+              title: Air Quality
+              cache: 10m
+              url: "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=23.8103&longitude=90.4125&current=us_aqi,pm2_5,pm10,ozone,nitrogen_dioxide&timezone=Asia%2FDhaka"
+              template: |
+                {{ if eq .Response.StatusCode 200 }}
+                  {{ $aqi := .JSON.Int "current.us_aqi" }}
+                  <div class="size-h5">
+                    {{ if le $aqi 50 }}
+                      <div class="color-positive">Good air quality</div>
+                    {{ else if le $aqi 100 }}
+                      <div class="color-primary">Moderate air quality</div>
+                    {{ else if le $aqi 150 }}
+                      <div class="color-negative">Unhealthy for sensitive groups</div>
+                    {{ else if le $aqi 200 }}
+                      <div class="color-negative">Unhealthy air quality</div>
+                    {{ else }}
+                      <div class="color-negative">Very unhealthy air quality</div>
+                    {{ end }}
+                  </div>
+
+                  <div class="color-highlight size-h2">AQI: {{ $aqi }}</div>
+                  <div style="border-bottom: 1px solid; margin-block: 10px;"></div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                      <div class="size-h3 color-highlight">{{ .JSON.Float "current.pm2_5" | printf "%.1f" }} ug/m3</div>
+                      <div class="size-h6">PM2.5</div>
+                    </div>
+                    <div>
+                      <div class="size-h3 color-highlight">{{ .JSON.Float "current.pm10" | printf "%.1f" }} ug/m3</div>
+                      <div class="size-h6">PM10</div>
+                    </div>
+                    <div>
+                      <div class="size-h3 color-highlight">{{ .JSON.Float "current.ozone" | printf "%.1f" }} ug/m3</div>
+                      <div class="size-h6">OZONE</div>
+                    </div>
+                    <div>
+                      <div class="size-h3 color-highlight">{{ .JSON.Float "current.nitrogen_dioxide" | printf "%.1f" }} ug/m3</div>
+                      <div class="size-h6">NO2</div>
+                    </div>
+                  </div>
+
+                  <div class="size-h6" style="margin-top: 10px;">Updated {{ slice (.JSON.String "current.time") 11 16 }}</div>
+                  <a class="size-h6" href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noreferrer">Data: Open-Meteo / CAMS</a>
+                {{ else }}
+                  <div class="color-negative">Air quality data unavailable</div>
+                {{ end }}
 
         - type: custom-api
           title: LeetCode Daily Question
@@ -208,6 +254,42 @@
               {{ end }}
             </div>
 
+        - type: group
+          title: GitHub
+          widgets:
+            - type: custom-api
+              title: Trending Repositories
+              cache: 24h
+              url: https://api.ossinsight.io/v1/trends/repos/?period=${PERIOD}&language=${LANGUAGE}
+              template: |
+                <ul class="list list-gap-10 collapsible-container" data-collapse-after="5">
+                  {{ range .JSON.Array "data.rows" }}
+                    <li>
+                      <a class="color-primary-if-not-visited" href="https://github.com/{{ .String "repo_name" }}" target="_blank" rel="noreferrer">{{ .String "repo_name" }}</a>
+                      <ul class="list-horizontal-text">
+                        <li class="color-highlight">{{ .String "primary_language" }}</li>
+                        <li>{{ .Int "stars" }} stars</li>
+                        <li>{{ .Int "forks" }} forks</li>
+                        <li>{{ .Int "pull_requests" }} PRs</li>
+                      </ul>
+                    </li>
+                  {{ end }}
+                </ul>
+
+            - type: releases
+              title: Releases
+              cache: 1d
+              # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+              # read-only token from your Github account settings and use it here to increase the limit.
+              # token: ...
+              repositories:
+                - spicetify/cli
+                - crimera/piko
+                - glanceapp/glance
+                - go-gitea/gitea
+                - immich-app/immich
+                - syncthing/syncthing
+
         - type: markets
           markets:
             - symbol: SPY
@@ -220,16 +302,3 @@
               name: Apple
             - symbol: MSFT
               name: Microsoft
-
-        - type: releases
-          cache: 1d
-          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
-          # read-only token from your Github account settings and use it here to increase the limit.
-          # token: ...
-          repositories:
-            - spicetify/cli
-            - crimera/piko
-            - glanceapp/glance
-            - go-gitea/gitea
-            - immich-app/immich
-            - syncthing/syncthing

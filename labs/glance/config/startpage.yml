@@ -30,6 +30,12 @@
             - title: Boutique
               url: "${BOUTIQUE_URL}"
               icon: si:homeassistantcommunitystore
+            - title: LLM
+              url: "${LLM_URL}"
+              icon: mdi:robot-outline
+            - title: S3 Proxy
+              url: "${S3_URL}"
+              icon: mdi:database
 
         - type: bookmarks
           groups:

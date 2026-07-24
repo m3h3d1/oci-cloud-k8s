@@ -1,58 +1,102 @@
 - name: Media
+  width: wide
+  head-widgets:
+    - type: rss
+      title: Fresh Videos
+      style: horizontal-cards
+      thumbnail-height: 14
+      limit: 8
+      cache: 15m
+      feeds:
+        - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCi8e0iOVk1fEOogdfu4YgfA
+          title: Rotten Tomatoes
+        - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCKy1dAqELo0zrOtPkf0eTMw
+          title: IGN
+        - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCWOA1ZGywLbqmigxE4Qlvuw
+          title: Netflix
+        - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCx-KWLTKlB83hDI6UKECtJQ
+          title: HBO
+
   columns:
     - size: full
       widgets:
-        - type: group
-          title: Media Server
-          widgets:
-            - type: custom-api
-              title: Now Playing
-              cache: 1m
-              url: https://api.jsonbin.io/v3/b/66e5f5e347762634e1767c37 # Mocking a media server response
-              template: |
-                <div class="flex gap-4 items-center p-2">
-                  <img src="https://via.placeholder.com/80x120" class="rounded shadow" />
-                  <div>
-                    <div class="size-h4 color-highlight">S3E14 • Suits</div>
-                    <div class="size-h6 text-gray-400">Herzenssachen</div>
-                    <div class="w-full bg-gray-700 h-1 mt-2 rounded-full overflow-hidden">
-                      <div class="bg-blue-500 h-full" style="width: 70%"></div>
-                    </div>
-                    <div class="text-right size-h6 text-gray-500 mt-1">23:18</div>
-                  </div>
-                </div>
-
-        - type: group
-          title: Trends
+        - type: split-column
+          max-columns: 2
           widgets:
             - type: rss
-              style: horizontal-cards
-              limit: 5
+              title: Movie Discovery
+              style: horizontal-cards-2
+              card-height: 24
+              limit: 8
+              cache: 30m
               feeds:
-                - url: https://news.google.com/rss/search?q=top+movies+trending&hl=en-US&gl=US&ceid=US:en
-                  title: Trending Movies
-                - url: https://news.google.com/rss/search?q=best+new+tv+shows&hl=en-US&gl=US&ceid=US:en
-                  title: Trending Series
+                - url: https://www.slashfilm.com/feed/
+                  title: /Film
+                  limit: 4
+                - url: https://www.polygon.com/rss/index.xml
+                  title: Polygon
+                  limit: 4
+            - type: rss
+              title: TV and Entertainment
+              style: horizontal-cards-2
+              card-height: 24
+              limit: 8
+              cache: 30m
+              feeds:
+                - url: https://www.avclub.com/rss
+                  title: AV Club
+                  limit: 4
+                - url: https://www.slashfilm.com/feed/
+                  title: /Film
+                  limit: 4
+
     - size: small
       widgets:
-        - type: group
-          title: Releases
-          widgets:
-            - type: rss
-              title: Film Releases
-              limit: 5
-              feeds:
-                - url: https://news.google.com/rss/search?q=upcoming+movie+releases&hl=en-US&gl=US&ceid=US:en
-            - type: rss
-              title: Series Releases
-              limit: 5
-              feeds:
-                - url: https://news.google.com/rss/search?q=upcoming+tv+series+releases&hl=en-US&gl=US&ceid=US:en
+        - type: custom-api
+          title: Tonight
+          css-class: media-schedule
+          cache: 30m
+          url: https://api.tvmaze.com/schedule?country=US
+          template: |
+            <ul class="list list-gap-10 collapsible-container" data-collapse-after="6">
+            {{ range .JSON.Array "" }}
+              <li class="media-schedule-item">
+                <a href="{{ .String "show.url" }}" class="flex gap-10 items-center">
+                  {{ if .Exists "show.image.medium" }}
+                    <img src="{{ .String "show.image.medium" }}" class="media-schedule-image" loading="lazy" />
+                  {{ end }}
+                  <div class="min-width-0">
+                    <div class="text-truncate color-highlight">{{ .String "show.name" }}</div>
+                    <div class="size-h6 color-paragraph">{{ .String "airtime" }} · {{ .String "show.network.name" }}</div>
+                  </div>
+                </a>
+              </li>
+            {{ end }}
+            </ul>
+
+        - type: bookmarks
+          groups:
+            - title: Discovery
+              links:
+                - title: TMDB
+                  url: https://www.themoviedb.org/discover
+                  icon: si:themoviedatabase
+                - title: Letterboxd
+                  url: https://letterboxd.com/
+                  icon: si:letterboxd
+                - title: TVMaze
+                  url: https://www.tvmaze.com/
+                  icon: mdi:television-classic
+                - title: YouTube
+                  url: https://www.youtube.com/
+                  icon: si:youtube
+
         - type: custom-api
           title: xkcd
-          cache: 2m
+          cache: 2h
           url: https://xkcd.com/info.0.json
-          template: | 
-            <body> {{ .JSON.String "title" }}</body>
-            <img src="{{ .JSON.String "img" }}"></img>
-        
+          template: |
+            <div class="text-center">
+              <div class="size-h4 color-highlight">{{ .JSON.String "title" }}</div>
+              <img src="{{ .JSON.String "img" }}" alt="{{ .JSON.String "alt" }}" loading="lazy" />
+            </div>

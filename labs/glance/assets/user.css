@@ -1,0 +1,16 @@
+.media-schedule .widget-content {
+  max-height: 42rem;
+  overflow-y: auto;
+}
+
+.media-schedule-item {
+  border-bottom: 1px solid var(--color-separator);
+  padding-bottom: 0.5rem;
+}
+
+.media-schedule-image {
+  aspect-ratio: 2 / 3;
+  border-radius: 0.35rem;
+  object-fit: cover;
+  width: 3rem;
+}

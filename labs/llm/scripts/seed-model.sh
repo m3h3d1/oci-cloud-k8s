@@ -9,6 +9,7 @@ NAMESPACE="lab"
 SOURCE_NODE="10.0.1.84"
 SEED_PVC="models-llama-server-0"
 CLONE_PVC="models-llama-server-1"
+MODEL_NAME="qwen3.5-2b-q4_0.gguf"
 
 cleanup_pvc() {
   local name=$1
@@ -58,11 +59,11 @@ kubectl wait -n $NAMESPACE --for=condition=ready pod/copy-helper --timeout=60s
 
 echo "=== Copying model (this takes ~15s) ==="
 kubectl exec -n lab copy-helper -- sh -c '
-  cp -v /source/qwen3.5-2b-q4_0.gguf /dest/qwen3.5-2b-q4_0.gguf 2>&1 && sync && echo "sync ok"
+  cp -v /source/'"$MODEL_NAME"' /dest/'"$MODEL_NAME"' 2>&1 && sync && echo "sync ok"
 '
 
 echo "=== Verifying seed PVC ==="
-kubectl exec -n lab copy-helper -- ls -lh /dest/qwen3.5-2b-q4_0.gguf
+kubectl exec -n lab copy-helper -- ls -lh /dest/$MODEL_NAME
 
 echo "=== Cleaning up copy pod ==="
 kubectl delete pod -n lab copy-helper --grace-period=0 --force 2>/dev/null
