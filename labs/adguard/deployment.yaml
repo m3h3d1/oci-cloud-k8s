@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard
+  namespace: lab
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # single RWO PVC — don't run two pods at once
+  selector:
+    matchLabels:
+      app: adguard
+  template:
+    metadata:
+      labels:
+        app: adguard
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000         # make the Longhorn PVC writable by uid 1000
+      initContainers:
+      # Seeds AdGuardHome.yaml once, injecting the bcrypt hash of the Vault
+      # password. Uses httpd (has htpasswd with bcrypt); the AdGuard image does not.
+      - name: render-config
+        image: docker.io/httpd:2.4-alpine
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          if [ -f /conf/AdGuardHome.yaml ]; then
+            echo "config exists, leaving AdGuard's own copy in place"
+            exit 0
+          fi
+          HASH=$(htpasswd -bnBC 10 "" "$ADGUARD_WEB_PASSWORD" | cut -d: -f2)
+          sed "s|__PASSWORD_HASH__|${HASH}|" /seed/AdGuardHome.yaml > /conf/AdGuardHome.yaml
+          echo "seeded /conf/AdGuardHome.yaml"
+        env:
+        - name: ADGUARD_WEB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: adguard-web-password
+              key: password
+        volumeMounts:
+        - name: seed
+          mountPath: /seed
+        - name: data
+          mountPath: /conf
+          subPath: conf
+      containers:
+      - name: adguard
+        image: docker.io/adguard/adguardhome:v0.107.78
+        # Full args replicate the image's default CMD (overriding it drops the
+        # -c/-w paths and AdGuard won't find the seeded config → "first launch").
+        args:
+          - --no-check-update
+          - -h
+          - 0.0.0.0
+          - -c
+          - /opt/adguardhome/conf/AdGuardHome.yaml
+          - -w
+          - /opt/adguardhome/work
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["NET_BIND_SERVICE"]   # bind port 53
+        ports:
+        - name: dns-udp
+          containerPort: 53
+          protocol: UDP
+        - name: dns-tcp
+          containerPort: 53
+          protocol: TCP
+        - name: http
+          containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 96Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: data
+          mountPath: /opt/adguardhome/work
+          subPath: work
+        - name: data
+          mountPath: /opt/adguardhome/conf
+          subPath: conf
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 20
+      volumes:
+      - name: seed
+        configMap:
+          name: adguard-seed
+      - name: data
+        persistentVolumeClaim:
+          claimName: adguard-data

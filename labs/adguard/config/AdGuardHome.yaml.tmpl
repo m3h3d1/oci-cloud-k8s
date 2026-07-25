@@ -1,0 +1,37 @@
+# Seed config rendered once by the render-config init container (password hash
+# injected from Vault). AdGuard fills remaining defaults + schema_version on
+# first boot and owns the file thereafter, so this is a starting point only.
+# schema_version MUST match the binary's current schema, else AdGuard runs its
+# migration chain from scratch and corrupts bootstrap_dns into a nested list.
+schema_version: 34
+http:
+  address: 0.0.0.0:80
+users:
+  - name: admin
+    password: __PASSWORD_HASH__
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  # 0 = unlimited: Glance's dns-stats widget bursts queries on refresh and the
+  # default limit blanks its graphs (glanceapp/glance#211).
+  ratelimit: 0
+  upstream_mode: load_balance
+  upstream_dns:
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.quad9.net/dns-query
+  bootstrap_dns:
+    - 1.1.1.1
+    - 9.9.9.9
+filtering:
+  protection_enabled: true
+  filtering_enabled: true
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+    name: StevenBlack hosts
+    id: 2
