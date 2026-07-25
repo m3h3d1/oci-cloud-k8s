@@ -1,0 +1,22 @@
+# Exposes DNS to the tailnet only (no OCI/public LB) via the Tailscale operator.
+# UDP-only on purpose: a tailscale LoadBalancer exposing both 53/TCP and 53/UDP
+# can split them onto separate tailnet nodes/IPs (tailscale/tailscale#15539),
+# which breaks DNS. AdGuard's block/allow answers are tiny and always fit UDP,
+# so UDP alone fully covers ad-blocking.
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-dns
+  namespace: lab
+  annotations:
+    tailscale.com/hostname: adguard-dns
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app: adguard
+  ports:
+    - name: dns-udp
+      port: 53
+      targetPort: 53
+      protocol: UDP
