@@ -50,4 +50,24 @@ spec:
       backendRefs:
         - name: whoami
           port: 80
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: whoami-oidc
+  namespace: lab
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: whoami
+  oidc:
+    provider:
+      issuer: https://login.nirjon.xyz/dex/
+    clientID: envoy-gateway
+    clientSecret:
+      name: dex-envoy-client
+    redirectURL: https://whoami.nirjon.xyz/oauth2/callback
+    logoutPath: /logout
+    refreshToken: true
 

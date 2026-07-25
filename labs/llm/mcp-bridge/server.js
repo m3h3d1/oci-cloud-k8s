@@ -67,15 +67,6 @@ const server = http.createServer((req, res) => {
   const queryToken = reqUrl.searchParams.get('token');
 
   if (!tokenMatches(bearer) && !tokenMatches(queryToken)) {
-    // TEMP DIAG — remove once the WebUI header issue is resolved.
-    console.warn('401', JSON.stringify({
-      hasAuthHeader: !!req.headers['authorization'],
-      authScheme: authHeader.split(' ')[0] || null,
-      bearerLen: bearer ? bearer.length : 0,
-      expectedLen: BRIDGE_TOKEN.length,
-      hasQueryToken: !!queryToken,
-      headerNames: Object.keys(req.headers).sort(),
-    }));
     res.writeHead(401, CORS_HEADERS);
     res.end('unauthorized');
     return;

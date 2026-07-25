@@ -19,7 +19,7 @@ dns:
   upstream_mode: load_balance
   upstream_dns:
     - https://dns.cloudflare.com/dns-query
-    - https://dns.quad9.net/dns-query
+    - https://doh.opendns.com/dns-query
   bootstrap_dns:
     - 1.1.1.1
     - 9.9.9.9
@@ -28,10 +28,10 @@ filtering:
   filtering_enabled: true
 filters:
   - enabled: true
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
-    name: AdGuard DNS filter
+    url: https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt
+    name: HaGeZi Multi Pro
     id: 1
-  - enabled: true
-    url: https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
-    name: StevenBlack hosts
-    id: 2
+# 30d retention sizes the PVC (see pvc.yaml) — not the 90d AdGuard default.
+querylog:
+  enabled: true
+  interval: 30d
