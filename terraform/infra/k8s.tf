@@ -1,8 +1,5 @@
 locals {
-  k8s_available_versions = jsonencode(data.oci_containerengine_node_pool_option.node_pool_options.kubernetes_versions)
-  available_oke_images   = jsonencode(data.oci_containerengine_node_pool_option.node_pool_options.sources)
-  k8s_version            = jsondecode(data.jq_query.latest_k8s_version.result)
-  node_pool_image_id     = jsondecode(data.jq_query.latest_image.result)
+  available_oke_images = jsonencode(data.oci_containerengine_node_pool_option.node_pool_options.sources)
 }
 
 data "oci_containerengine_node_pool_option" "node_pool_options" {
@@ -14,21 +11,15 @@ data "oci_identity_availability_domains" "ads" {
   compartment_id = var.compartment_id
 }
 
-# https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm
-data "jq_query" "latest_k8s_version" {
-  data  = local.k8s_available_versions
-  query = ". | last"
-}
-
 data "jq_query" "latest_image" {
   data  = local.available_oke_images
-  query = "[.[] | select(.source_name | test(\".*aarch.*OKE-${replace(local.k8s_version, "v", "")}.*\")?) .image_id] | first"
+  query = "[.[] | select(.source_name | test(\".*aarch.*OKE-${replace(var.kubernetes_version, "v", "")}.*\")?) .image_id] | first"
 }
 
 
 resource "oci_containerengine_cluster" "k8s_cluster" {
   compartment_id     = var.compartment_id
-  kubernetes_version = local.k8s_version
+  kubernetes_version = var.kubernetes_version
   name               = "k8s-cluster"
   vcn_id             = module.vcn.vcn_id
   endpoint_config {
@@ -63,7 +54,7 @@ resource "local_file" "kube_config" {
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
   cluster_id         = oci_containerengine_cluster.k8s_cluster.id
   compartment_id     = var.compartment_id
-  kubernetes_version = local.k8s_version
+  kubernetes_version = var.kubernetes_version
   name               = "k8s-node-pool"
 
   node_metadata = {
