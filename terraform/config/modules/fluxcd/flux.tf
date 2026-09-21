@@ -10,6 +10,7 @@ resource "helm_release" "flux_operator" {
   namespace  = kubernetes_namespace.flux_system.id
   repository = "oci://ghcr.io/controlplaneio-fluxcd/charts"
   chart      = "flux-operator"
+  version    = "0.60.0"
   wait       = true
 }
 
@@ -40,6 +41,7 @@ resource "helm_release" "flux_instance" {
   namespace  = kubernetes_namespace.flux_system.id
   repository = "oci://ghcr.io/controlplaneio-fluxcd/charts"
   chart      = "flux-instance"
+  version    = "0.60.0"
 
   values = [<<YAML
 instance:
@@ -51,8 +53,6 @@ instance:
     - kustomize-controller
     - helm-controller
     - notification-controller
-    - image-automation-controller
-    - image-reflector-controller
   sync:
     kind: GitRepository
     url: ${var.git_url}
@@ -60,6 +60,26 @@ instance:
     ref: "refs/heads/dev"
     provider: github
     pullSecret: flux-instance-config
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+          name: "(source-controller)"
+        patch: |
+          - op: replace
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests: {cpu: 20m, memory: 64Mi}
+              limits: {memory: 256Mi}
+      - target:
+          kind: Deployment
+          name: "(kustomize-controller|helm-controller|notification-controller)"
+        patch: |
+          - op: replace
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests: {cpu: 10m, memory: 32Mi}
+              limits: {memory: 128Mi}
 YAML
   ]
 }
