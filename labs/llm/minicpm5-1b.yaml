@@ -1,0 +1,140 @@
+# Temporary CPU inference test for MiniCPM5-1B.
+# Apply manually with: kubectl apply -f labs/llm/minicpm5-1b.yaml
+# Remove completely with: kubectl delete -f labs/llm/minicpm5-1b.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-minicpm5-1b
+  namespace: lab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minicpm5-1b
+  namespace: lab
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: minicpm5-1b
+  template:
+    metadata:
+      labels:
+        app: minicpm5-1b
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: 10.0.1.22
+      initContainers:
+        - name: download-model
+          image: docker.io/curlimages/curl:8.16.0
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -ec
+            - |
+              model=/models/MiniCPM5-1B-Q4_K_M.gguf
+              test -s "$model" || curl --fail --location --retry 3 \
+                --output "$model" \
+                https://huggingface.co/openbmb/MiniCPM5-1B-GGUF/resolve/main/MiniCPM5-1B-Q4_K_M.gguf
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server
+          args:
+            - --model
+            - /models/MiniCPM5-1B-Q4_K_M.gguf
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+            - --ctx-size
+            - "4096"
+            - --parallel
+            - "1"
+            - --threads
+            - "2"
+            - --threads-batch
+            - "2"
+            - --reasoning
+            - "on"
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 1300m
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: models-minicpm5-1b
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minicpm5-1b
+  namespace: lab
+spec:
+  selector:
+    app: minicpm5-1b
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: minicpm-llm
+  namespace: lab
+spec:
+  hostnames:
+    - minicpm-llm.nirjon.xyz
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy
+      namespace: envoy-gateway
+  rules:
+    - backendRefs:
+        - name: minicpm5-1b
+          port: 8080
+      timeouts:
+        request: 0s
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: minicpm-llm-oidc
+  namespace: lab
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: minicpm-llm
+  oidc:
+    provider:
+      issuer: https://login.nirjon.xyz/dex/
+    clientID: envoy-gateway
+    clientSecret:
+      name: dex-envoy-client
+    redirectURL: https://minicpm-llm.nirjon.xyz/oauth2/callback
+    logoutPath: /logout
+    refreshToken: true

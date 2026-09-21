@@ -36,19 +36,6 @@
                 - url: https://www.polygon.com/rss/index.xml
                   title: Polygon
                   limit: 4
-            - type: rss
-              title: TV and Entertainment
-              style: horizontal-cards-2
-              card-height: 24
-              limit: 8
-              cache: 30m
-              feeds:
-                - url: https://www.avclub.com/rss
-                  title: AV Club
-                  limit: 4
-                - url: https://www.slashfilm.com/feed/
-                  title: /Film
-                  limit: 4
 
     - size: small
       widgets:

@@ -47,6 +47,8 @@
                   url: "${GRAFANA_URL}"
                 - title: Teleport
                   url: "${TELEPORT_URL}"
+                - title: AdGuard
+                  url: "${ADGUARD_URL}"
             - title: General
               links:
                 - title: GitHub

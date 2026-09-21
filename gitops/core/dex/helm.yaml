@@ -69,6 +69,8 @@ spec:
             - https://storage.nirjon.xyz/oauth2/callback
             - https://prometheus.nirjon.xyz/oauth2/callback
             - https://llm.nirjon.xyz/oauth2/callback
+            - https://gemma-llm.nirjon.xyz/oauth2/callback
+            - https://minicpm-llm.nirjon.xyz/oauth2/callback
             - https://adguard.nirjon.xyz/oauth2/callback
             - https://whoami.nirjon.xyz/oauth2/callback
         - name: S3Proxy
