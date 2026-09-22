@@ -1,0 +1,176 @@
+# Headlamp UI for Flux, protected by Dex OIDC at the gateway.
+# Apply manually with: kubectl apply -f labs/flux/headlamp.yaml
+# Remove completely with: kubectl delete -f labs/flux/headlamp.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp
+  namespace: lab
+---
+# Read everything except secrets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: headlamp
+    namespace: lab
+---
+# Nodes, CRDs and metrics are outside the view role. Flux needs patch for
+# suspend, resume and reconcile.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: headlamp-extra
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - kustomize.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+    resources: ["*"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-extra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: headlamp-extra
+subjects:
+  - kind: ServiceAccount
+    name: headlamp
+    namespace: lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headlamp
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headlamp
+  template:
+    metadata:
+      labels:
+        app: headlamp
+    spec:
+      serviceAccountName: headlamp
+      automountServiceAccountToken: true
+      initContainers:
+        - name: flux-plugin
+          image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.7.0
+          securityContext:
+            runAsUser: 0
+          command:
+            - /bin/sh
+            - -ec
+            - cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build
+          volumeMounts:
+            - name: plugins
+              mountPath: /build/plugins
+      containers:
+        - name: headlamp
+          image: ghcr.io/headlamp-k8s/headlamp:v0.45.0
+          args:
+            - -in-cluster
+            - -in-cluster-context-name=main
+            - -plugins-dir=/build/plugins
+            - -session-ttl=86400
+            - -unsafe-use-service-account-token
+          ports:
+            - name: http
+              containerPort: 4466
+          securityContext:
+            runAsUser: 100
+            runAsGroup: 101
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 384Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          volumeMounts:
+            - name: plugins
+              mountPath: /build/plugins
+      volumes:
+        - name: plugins
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: headlamp
+  namespace: lab
+spec:
+  selector:
+    app: headlamp
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp
+  namespace: lab
+spec:
+  hostnames:
+    - headlamp.nirjon.xyz
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy
+      namespace: envoy-gateway
+  rules:
+    - backendRefs:
+        - name: headlamp
+          port: 80
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: headlamp-oidc
+  namespace: lab
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: headlamp
+  oidc:
+    provider:
+      issuer: https://login.nirjon.xyz/dex/
+    clientID: envoy-gateway
+    clientSecret:
+      name: dex-envoy-client
+    redirectURL: https://headlamp.nirjon.xyz/oauth2/callback
+    logoutPath: /logout
+    refreshToken: true
