@@ -12,6 +12,13 @@ resource "helm_release" "flux_operator" {
   chart      = "flux-operator"
   version    = "0.60.0"
   wait       = true
+
+  values = [<<YAML
+resources:
+  requests: {cpu: 10m, memory: 64Mi}
+  limits: {memory: 256Mi}
+YAML
+  ]
 }
 
 resource "kubernetes_secret" "git_auth" {
