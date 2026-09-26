@@ -74,6 +74,7 @@ spec:
             - https://adguard.nirjon.xyz/oauth2/callback
             - https://whoami.nirjon.xyz/oauth2/callback
             - https://headlamp.nirjon.xyz/oauth2/callback
+            - https://mllm.nirjon.xyz/oauth2/callback
         - name: S3Proxy
           IDEnv: s3proxy.client-id
           secretEnv: s3proxy.client-secret

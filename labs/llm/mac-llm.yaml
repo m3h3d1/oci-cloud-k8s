@@ -1,0 +1,72 @@
+# LLM running on the Mac mini (m2p), reached over Tailscale.
+# Needs llama-server on the Mac listening on its Tailscale IP, port 8080.
+# Apply manually with: kubectl apply -f labs/llm/mac-llm.yaml
+# Remove completely with: kubectl delete -f labs/llm/mac-llm.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mac-llm
+  namespace: lab
+  annotations:
+    tailscale.com/tailnet-fqdn: m2p.tail76c05d.ts.net
+spec:
+  type: ExternalName
+  externalName: placeholder
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+---
+# Envoy Gateway rejects ExternalName Services, so route through a Backend
+# that resolves the Service's DNS name.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: mac-llm
+  namespace: lab
+spec:
+  endpoints:
+    - fqdn:
+        hostname: mac-llm.lab.svc.cluster.local
+        port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mac-llm
+  namespace: lab
+spec:
+  hostnames:
+    - mllm.nirjon.xyz
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy
+      namespace: envoy-gateway
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: mac-llm
+      timeouts:
+        request: 0s
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: mac-llm-oidc
+  namespace: lab
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: mac-llm
+  oidc:
+    provider:
+      issuer: https://login.nirjon.xyz/dex/
+    clientID: envoy-gateway
+    clientSecret:
+      name: dex-envoy-client
+    redirectURL: https://mllm.nirjon.xyz/oauth2/callback
+    logoutPath: /logout
+    refreshToken: true

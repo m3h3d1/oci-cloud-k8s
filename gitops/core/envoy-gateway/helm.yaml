@@ -24,6 +24,10 @@ spec:
       interval: 5m
   releaseName: envoy-gateway
   values:
+    config:
+      envoyGateway:
+        extensionApis:
+          enableBackend: true
     deployment:
       envoyGateway:
         resources:
